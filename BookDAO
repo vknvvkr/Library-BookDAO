@@ -1,0 +1,101 @@
+package org.example;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BookDAO {
+
+    public List<Book> getAllBooks() {
+
+        List<Book> books = new ArrayList<>();
+
+        String sql = "SELECT * FROM books";
+
+        try (
+                Connection connection = DBConnection.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet result = statement.executeQuery(sql)
+        ) {
+
+            while (result.next()) {
+
+                Book book = new Book(
+                        result.getInt("id"),
+                        result.getString("title"),
+                        result.getString("author"),
+                        result.getInt("year")
+                );
+
+                books.add(book);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return books;
+    }
+
+
+    public void addBook(String title, String author, int year) {
+
+        String sql = "INSERT INTO books (title, author, year) VALUES (?, ?, ?)";
+
+        try (
+                Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(1, title);
+            statement.setString(2, author);
+            statement.setInt(3, year);
+
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void updateBook(int id, String title, String author, int year) {
+
+        String sql = "UPDATE books SET title = ?, author = ?, year = ? WHERE id = ?";
+
+        try (
+                Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(1, title);
+            statement.setString(2, author);
+            statement.setInt(3, year);
+            statement.setInt(4, id);
+
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void deleteBook(int id) {
+
+        String sql = "DELETE FROM books WHERE id = ?";
+
+        try (
+                Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+
+            statement.setInt(1, id);
+
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
