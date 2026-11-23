@@ -1,111 +1,152 @@
-package kz.library;
+package org.example;
 
-import java.sql.*;
+import java.sql.Date;
 import java.util.Scanner;
 
 public class Main {
-    private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
+
+        Scanner scanner = new Scanner(System.in);
+
+        BookDAO bookDAO = new BookDAO();
+        LibraryDAO libraryDAO = new LibraryDAO();
+
         while (true) {
-            System.out.println("\n=== БИБЛИОТЕКА ===");
-            System.out.println("1. Показать книги");
+
+            System.out.println("\nБИБЛИОТЕКА");
+            System.out.println("1. Показать все книги");
             System.out.println("2. Добавить книгу");
-            System.out.println("3. Изменить книгу");
-            System.out.println("4. Удалить книгу");
+            System.out.println("3. Найти книгу");
+            System.out.println("4. Изменить книгу");
+            System.out.println("5. Удалить книгу");
+            System.out.println("6. Добавить автора");
+            System.out.println("7. Добавить читателя");
+            System.out.println("8. Выдать книгу");
+            System.out.println("9. Показать выдачи");
+            System.out.println("10. Вернуть книгу");
             System.out.println("0. Выход");
+
             System.out.print("Выберите действие: ");
 
-            String choice = scanner.nextLine();
+            int choice;
 
             try {
-                switch (choice) {
-                    case "1" -> showBooks();
-                    case "2" -> addBook();
-                    case "3" -> updateBook();
-                    case "4" -> deleteBook();
-                    case "0" -> {
-                        System.out.println("Программа завершена.");
-                        return;
-                    }
-                    default -> System.out.println("Неверный пункт меню.");
-                }
-            } catch (SQLException e) {
-                System.out.println("Ошибка базы данных: " + e.getMessage());
+                choice = Integer.parseInt(scanner.nextLine());
             } catch (NumberFormatException e) {
-                System.out.println("Введите корректное число.");
+                System.out.println("Введите число!");
+                continue;
             }
-        }
-    }
 
-    // READ: просмотр всех книг вместе с авторами
-    private static void showBooks() throws SQLException {
-        String sql = "SELECT books.id, books.title, books.year_published, authors.full_name " +
-                     "FROM books JOIN authors ON books.author_id = authors.id ORDER BY books.id";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet result = statement.executeQuery()) {
-            System.out.println("\nID | Название | Год | Автор");
-            while (result.next()) {
-                System.out.println(result.getInt("id") + " | " +
-                        result.getString("title") + " | " +
-                        result.getInt("year_published") + " | " +
-                        result.getString("full_name"));
+            switch (choice) {
+
+                case 1:
+                    for (String book : bookDAO.getAllBooks()) {
+                        System.out.println(book);
+                    }
+                    break;
+
+                case 2:
+                    System.out.print("Название: ");
+                    String title = scanner.nextLine();
+
+                    System.out.print("ID автора: ");
+                    int authorId = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("Год: ");
+                    int year = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("Количество: ");
+                    int quantity = Integer.parseInt(scanner.nextLine());
+
+                    bookDAO.addBook(title, authorId, year, quantity);
+                    break;
+
+                case 3:
+                    System.out.print("ID книги: ");
+                    int searchId = Integer.parseInt(scanner.nextLine());
+                    bookDAO.findBook(searchId);
+                    break;
+
+                case 4:
+                    System.out.print("ID книги: ");
+                    int id = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("Новое название: ");
+                    String newTitle = scanner.nextLine();
+
+                    System.out.print("Новый год: ");
+                    int newYear = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("Количество: ");
+                    int newQuantity = Integer.parseInt(scanner.nextLine());
+
+                    bookDAO.updateBook(id, newTitle, newYear, newQuantity);
+                    break;
+
+                case 5:
+                    System.out.print("ID книги: ");
+                    int deleteId = Integer.parseInt(scanner.nextLine());
+                    bookDAO.deleteBook(deleteId);
+                    break;
+
+                case 6:
+                    System.out.print("Имя автора: ");
+                    String author = scanner.nextLine();
+
+                    System.out.print("Страна: ");
+                    String country = scanner.nextLine();
+
+                    libraryDAO.addAuthor(author, country);
+                    break;
+
+                case 7:
+                    System.out.print("Имя читателя: ");
+                    String reader = scanner.nextLine();
+
+                    System.out.print("Телефон: ");
+                    String phone = scanner.nextLine();
+
+                    libraryDAO.addReader(reader, phone);
+                    break;
+
+                case 8:
+                    System.out.print("ID книги: ");
+                    int bookId = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("ID читателя: ");
+                    int readerId = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("Дата выдачи (ГГГГ-ММ-ДД): ");
+                    Date date = Date.valueOf(scanner.nextLine());
+
+                    libraryDAO.addLoan(bookId, readerId, date);
+                    break;
+
+                case 9:
+                    for (String loan : libraryDAO.getAllLoans()) {
+                        System.out.println(loan);
+                    }
+                    break;
+
+                case 10:
+                    System.out.print("ID выдачи: ");
+                    int loanId = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("Дата возврата (ГГГГ-ММ-ДД): ");
+                    Date returnDate = Date.valueOf(scanner.nextLine());
+
+                    libraryDAO.returnBook(loanId, returnDate);
+                    break;
+
+                case 0:
+                    System.out.println("Программа завершена!");
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Неверный выбор!");
             }
-        }
-    }
-
-    // CREATE: добавление книги
-    private static void addBook() throws SQLException {
-        System.out.print("Название книги: ");
-        String title = scanner.nextLine();
-        System.out.print("Год издания: ");
-        int year = Integer.parseInt(scanner.nextLine());
-        System.out.print("ID автора (1 или 2 для начальных данных): ");
-        int authorId = Integer.parseInt(scanner.nextLine());
-
-        String sql = "INSERT INTO books (title, year_published, author_id) VALUES (?, ?, ?)";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, title);
-            statement.setInt(2, year);
-            statement.setInt(3, authorId);
-            int rows = statement.executeUpdate();
-            System.out.println("Добавлено записей: " + rows);
-        }
-    }
-
-    // UPDATE: изменение названия и года книги
-    private static void updateBook() throws SQLException {
-        System.out.print("ID книги: ");
-        int id = Integer.parseInt(scanner.nextLine());
-        System.out.print("Новое название: ");
-        String title = scanner.nextLine();
-        System.out.print("Новый год издания: ");
-        int year = Integer.parseInt(scanner.nextLine());
-
-        String sql = "UPDATE books SET title = ?, year_published = ? WHERE id = ?";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, title);
-            statement.setInt(2, year);
-            statement.setInt(3, id);
-            int rows = statement.executeUpdate();
-            System.out.println("Изменено записей: " + rows);
-        }
-    }
-
-    // DELETE: удаление книги
-    private static void deleteBook() throws SQLException {
-        System.out.print("ID книги: ");
-        int id = Integer.parseInt(scanner.nextLine());
-
-        String sql = "DELETE FROM books WHERE id = ?";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, id);
-            int rows = statement.executeUpdate();
-            System.out.println("Удалено записей: " + rows);
         }
     }
 }
