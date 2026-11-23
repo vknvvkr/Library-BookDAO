@@ -6,11 +6,16 @@ import java.util.List;
 
 public class BookDAO {
 
-    public List<Book> getAllBooks() {
+    public List<String> getAllBooks() {
 
-        List<Book> books = new ArrayList<>();
+        List<String> books = new ArrayList<>();
 
-        String sql = "SELECT * FROM books";
+        String sql = """
+                SELECT books.id, books.title, authors.name AS author,
+                books.year, books.quantity
+                FROM books
+                JOIN authors ON books.author_id = authors.id
+                """;
 
         try (
                 Connection connection = DBConnection.getConnection();
@@ -20,12 +25,11 @@ public class BookDAO {
 
             while (result.next()) {
 
-                Book book = new Book(
-                        result.getInt("id"),
-                        result.getString("title"),
-                        result.getString("author"),
-                        result.getInt("year")
-                );
+                String book = "ID: " + result.getInt("id") +
+                        ", Название: " + result.getString("title") +
+                        ", Автор: " + result.getString("author") +
+                        ", Год: " + result.getInt("year") +
+                        ", Количество: " + result.getInt("quantity");
 
                 books.add(book);
             }
@@ -38,9 +42,12 @@ public class BookDAO {
     }
 
 
-    public void addBook(String title, String author, int year) {
+    public void addBook(String title, int authorId, int year, int quantity) {
 
-        String sql = "INSERT INTO books (title, author, year) VALUES (?, ?, ?)";
+        String sql = """
+                INSERT INTO books (title, author_id, year, quantity)
+                VALUES (?, ?, ?, ?)
+                """;
 
         try (
                 Connection connection = DBConnection.getConnection();
@@ -48,10 +55,13 @@ public class BookDAO {
         ) {
 
             statement.setString(1, title);
-            statement.setString(2, author);
+            statement.setInt(2, authorId);
             statement.setInt(3, year);
+            statement.setInt(4, quantity);
 
             statement.executeUpdate();
+
+            System.out.println("Книга добавлена!");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -59,9 +69,43 @@ public class BookDAO {
     }
 
 
-    public void updateBook(int id, String title, String author, int year) {
+    public void findBook(int id) {
 
-        String sql = "UPDATE books SET title = ?, author = ?, year = ? WHERE id = ?";
+        String sql = "SELECT * FROM books WHERE id = ?";
+
+        try (
+                Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+
+            statement.setInt(1, id);
+
+            try (ResultSet result = statement.executeQuery()) {
+
+                if (result.next()) {
+                    System.out.println("ID: " + result.getInt("id"));
+                    System.out.println("Название: " + result.getString("title"));
+                    System.out.println("Автор ID: " + result.getInt("author_id"));
+                    System.out.println("Год: " + result.getInt("year"));
+                    System.out.println("Количество: " + result.getInt("quantity"));
+                } else {
+                    System.out.println("Книга не найдена!");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void updateBook(int id, String title, int year, int quantity) {
+
+        String sql = """
+                UPDATE books
+                SET title = ?, year = ?, quantity = ?
+                WHERE id = ?
+                """;
 
         try (
                 Connection connection = DBConnection.getConnection();
@@ -69,11 +113,13 @@ public class BookDAO {
         ) {
 
             statement.setString(1, title);
-            statement.setString(2, author);
-            statement.setInt(3, year);
+            statement.setInt(2, year);
+            statement.setInt(3, quantity);
             statement.setInt(4, id);
 
             statement.executeUpdate();
+
+            System.out.println("Книга изменена!");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -93,6 +139,8 @@ public class BookDAO {
             statement.setInt(1, id);
 
             statement.executeUpdate();
+
+            System.out.println("Книга удалена!");
 
         } catch (SQLException e) {
             e.printStackTrace();
